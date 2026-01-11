@@ -5,6 +5,7 @@ from protein_profiler.msa.searcher import UniProtSearcher
 from protein_profiler.msa.aligner import MAFFTAligner
 from protein_profiler.msa.qc import MSAQualityControl
 from protein_profiler.structure.annotator import StructureAnnotator
+from protein_profiler.ptm.annotator import PTMAnnotator
 
 
 # Define paths
@@ -70,3 +71,22 @@ print(df[['pos', 'aa_wt', 'entropy', 'ss3', 'surface_flag']].head())
 
 # Save final artifact [cite: 140]
 df.to_csv("results/residue_profile.csv", index=False)
+
+# 6. PTM Annotation [Stage E]
+ptm_engine = PTMAnnotator(ingestor.sequence)
+ptm_flags = ptm_engine.get_ptm_flags()
+
+# Initialize columns with defaults [cite: 149]
+df['ptm_flags'] = None
+df['ptm_sources'] = None
+
+# Map flags to the table
+for ptm in ptm_flags:
+    mask = df['pos'] == ptm['pos']
+    if mask.any():
+        df.loc[mask, 'ptm_flags'] = ptm['ptm_type']
+        df.loc[mask, 'ptm_sources'] = ptm['source']
+
+print("\n--- Profile Table with PTM Flags ---")
+# Show only residues where a PTM was found
+print(df[df['ptm_flags'].notna()][['pos', 'aa_wt', 'ptm_flags', 'ptm_sources']])
