@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "protein_profiler"
+version = "0.1.0"
+description = "A systematic, residue-level profile for protein engineering."
+dependencies = [
+    "biopython",
+    "pandas",
+    "numpy",
+    "pyyaml",
+    "torch"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
