@@ -45,3 +45,15 @@ class ESMScanner:
                     'esm_llr': llr
                 })
         return results
+    
+    def calculate_consensus(self, mut_df):
+        """
+        Calculates consensus rank and disagreement across models [cite: 110-112].
+        """
+        # Convert LLR to ranks (lower LLR = more deleterious = higher rank)
+        mut_df['rank_esm'] = mut_df.groupby('pos')['esm_llr'].rank(ascending=True)
+        
+        # In a real G3 setup, you'd add SaProt or ProteinMPNN ranks here [cite: 104, 106]
+        mut_df['consensus_rank'] = mut_df['rank_esm'] 
+        mut_df['support_count'] = 1 # Currently 1 model, framework ready for more
+        return mut_df

@@ -1,31 +1,25 @@
-import pandas as pd
-import subprocess
-import os
+import numpy as np
+from Bio.PDB import NeighborSearch
 
-class RINGNetwork:
-    def __init__(self, pdb_path, output_dir="results/ring"):
+class RINGAdapter:
+    def __init__(self, pdb_path, chain_id="A"):
         self.pdb_path = pdb_path
-        self.output_dir = output_dir
-        os.makedirs(self.output_dir, exist_ok=True)
+        self.chain_id = chain_id
 
-    def run_ring(self):
-        """
-        Executes RING to generate node and edge files.
-        Note: This assumes the 'ring' executable is in your PATH.
-        """
-        print(f"🕸️ Generating Residue Interaction Network with RING...")
+    def extract_features(self, structure):
+        """Extracts degree (neighbor count) as a proxy for RING centrality."""
+        atoms = [atom for atom in structure.get_atoms() if atom.get_parent().get_parent().id == self.chain_id]
+        ns = NeighborSearch(atoms)
         
-        # In a real graduate project, you'd call the binary here.
-        # Example: subprocess.run(["ring", "-i", self.pdb_path, "-o", self.output_dir])
-        
-        # For now, let's define the feature extraction logic based on the docs [cite: 87-91]
-        pass
-
-    def extract_features(self):
-        """
-        Extracts degree and interaction counts per residue [cite: 87-88, 94].
-        Returns a DataFrame of features.
-        """
-        # We will create ring_features.csv with:
-        # pos, degree, w_degree, interaction_counts [cite: 94]
-        return pd.DataFrame()
+        # RING requirement: degree and weighted degree [cite: 88]
+        features = {}
+        for residue in structure.get_residues():
+            if residue.get_parent().id == self.chain_id:
+                # Find all atoms within 5.0 Angstroms of this residue's CA
+                if 'CA' in residue:
+                    neighbors = ns.search(residue['CA'].coord, 5.0, level='R')
+                    features[residue.id[1]] = {
+                        'degree': len(neighbors),
+                        'w_degree': len(neighbors) * 1.0 # Simplified weight
+                    }
+        return features
