@@ -1,0 +1,24 @@
+# 1. Python & Environments
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.env
+
+# 2. Project Folders 
+data/
+results/
+models/
+figures/
+
+# 3. Large Bio-Files Safety Net 
+*.pdb
+*.fasta
+*.parquet
+*.pth       # PyTorch models (ESM-2)
+*.bin       # Binary weights
+*.pkl       # Large pickle files
+
+# 4. Notebooks & OS
+.ipynb_checkpoints/
+.DS_Store
