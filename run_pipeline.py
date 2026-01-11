@@ -6,15 +6,22 @@ from protein_profiler.msa.aligner import MAFFTAligner
 from protein_profiler.msa.qc import MSAQualityControl
 from protein_profiler.structure.annotator import StructureAnnotator
 from protein_profiler.ptm.annotator import PTMAnnotator
-
+from protein_profiler.io.manifest import RunManifest
 
 # Define paths
 FASTA = "data/1gfl.fasta"
 PDB = "data/1gfl.pdb"
 
+# Initialize Manifest
+manifest = RunManifest()
+manifest.capture_tool_versions()
+
+
 # 1. Ingestion [Stage 1]
 ingestor = ProteinIngestor(fasta_path=FASTA, pdb_path=PDB)
 df = ingestor.load_data()
+manifest.add_parameter("ingestion", {"chain": "A", "fasta": FASTA})
+manifest.add_parameter("msa_search", {"size": 50, "database": "UniProtKB"})
 
 # 2. Search [Stage A1]
 searcher = UniProtSearcher()
@@ -90,3 +97,5 @@ for ptm in ptm_flags:
 print("\n--- Profile Table with PTM Flags ---")
 # Show only residues where a PTM was found
 print(df[df['ptm_flags'].notna()][['pos', 'aa_wt', 'ptm_flags', 'ptm_sources']])
+
+manifest.save()
