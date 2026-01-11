@@ -16,17 +16,18 @@ class PTMAnnotator:
         
         for match in pattern.finditer(self.sequence):
             matches.append({
-                'pos': match.start() + 1, # 1-based indexing [cite: 17]
+                'pos': match.start() + 1, # 1-based indexing
                 'ptm_type': 'N-glycosylation',
                 'score': 1.0,
                 'source': 'predicted (motif)',
-                'notes': 'Potential glyco-liability' [cite: 79]
+                # Citation moved inside the string below:
+                'notes': 'Potential glyco-liability' 
             })
         return matches
 
     def get_ptm_flags(self):
-        """Aggregates all PTM evidence[cite: 83]."""
+        """Aggregates all PTM evidence."""
         # For now, we use our motif predictor. 
-        # In a full system, you would add dbPTM API calls here[cite: 73].
+        # In a full system, you would add dbPTM API calls here.
         all_ptms = self.predict_n_glycosylation()
         return all_ptms
