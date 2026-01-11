@@ -4,6 +4,8 @@ from protein_profiler.io.ingestor import ProteinIngestor
 from protein_profiler.msa.searcher import UniProtSearcher
 from protein_profiler.msa.aligner import MAFFTAligner
 from protein_profiler.msa.qc import MSAQualityControl
+from protein_profiler.structure.annotator import StructureAnnotator
+
 
 # Define paths
 FASTA = "data/1gfl.fasta"
@@ -47,3 +49,24 @@ if raw_msa_path:
         print("\n✅ Stage A complete. Profile saved to results/residue_profile.csv")
 else:
     print("❌ Pipeline halted: Homology search failed.")
+
+# 5. Structure Annotation [Stage C & D]
+annotator = StructureAnnotator(PDB, chain_id="A")
+dssp_results = annotator.run_dssp()
+
+# Map SS8 to SS3 and add to DataFrame
+# We must ensure we match the PDB residues to our FASTA table
+for res in dssp_results:
+    mask = df['pos'] == res['pdb_resnum'] # Simplified mapping
+    if mask.any():
+        df.loc[mask, 'ss8'] = res['ss8']
+        df.loc[mask, 'ss3'] = annotator.map_to_ss3(res['ss8'])
+        df.loc[mask, 'rsa'] = res['rsa']
+        # Classify surface vs buried [cite: 62, 65]
+        df.loc[mask, 'surface_flag'] = res['rsa'] > 0.2
+
+print("\n--- Profile Table with Structure Data ---")
+print(df[['pos', 'aa_wt', 'entropy', 'ss3', 'surface_flag']].head())
+
+# Save final artifact [cite: 140]
+df.to_csv("results/residue_profile.csv", index=False)
