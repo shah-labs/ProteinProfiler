@@ -8,6 +8,7 @@ from protein_profiler.structure.annotator import StructureAnnotator
 from protein_profiler.ptm.annotator import PTMAnnotator
 from protein_profiler.io.manifest import RunManifest
 from protein_profiler.mutscan.scanner import ESMScanner
+from protein_profiler.prioritizer.ranker import SitePrioritizer
 
 
 
@@ -107,3 +108,17 @@ mut_df.to_parquet(f"{OUTPUT_DIR}/mut_scan.parquet")
 # Calculate average LLR per position as a proxy for tolerance
 tolerance = mut_df.groupby('pos')['esm_llr'].mean().reset_index()
 df = df.merge(tolerance.rename(columns={'esm_llr': 'mut_tolerance'}), on='pos')
+
+# 9. Site Prioritization [Stage H]
+prioritizer = SitePrioritizer(df)
+df = prioritizer.apply_rules()
+
+# Save the final "Single Source of Truth" [cite: 140, 160]
+df.to_csv(f"{OUTPUT_DIR}/residue_profile.csv", index=False)
+
+# 10. Generate human-readable report [cite: 139]
+top_sites = df[df['priority_class'] == 'safe'].sort_values('mut_tolerance', ascending=False)
+print("\n🚀 TOP ENGINEERING CANDIDATES (Safe Diversification):")
+print(top_sites[['pos', 'aa_wt', 'entropy', 'mut_tolerance', 'priority_class']].head(10))
+
+print(f"\n✨ PROJECT COMPLETE. Final table and manifest are in {OUTPUT_DIR}/")
